@@ -2,7 +2,6 @@
 % Please edit documentation in R/pmlr.R
 \name{pmlr}
 \alias{pmlr}
-\alias{summary.pmlr}
 \title{Penalized maximum likelihood estimation for multinomial logistic regression using the Jeffreys prior}
 \usage{
 pmlr(formula, data, weights = NULL, penalized = TRUE,
@@ -40,7 +39,7 @@ As such, an error will occur if this is set to TRUE and binomial data is entered
 
 \item{CI.calculate}{a logical variable whether the confidence limits were computed. Default is \code{FALSE}.}
 
-\item{CI.alpha}{the significance level for the profile-likelihood or Wald confidence intervals (default is 0.05).
+\item{CI.alpha}{the significance level for the profile or Wald confidence intervals (default is 0.05).
 Relevant only if \code{CI.calcuate=TRUE}.}
 
 \item{tol}{The tolerance for convergence can be specified for diagnostic purposes.
@@ -53,36 +52,42 @@ Nonetheless, higher tolerance values may reduce computation times and facilitate
 Default is \code{FALSE}.}
 }
 \value{
-\code{pmlr} returns an object of class \dQuote{\code{pmlr}} with the following components:
-  \item{call}{the matched call}
-  \item{method}{a character string indicating the method used to carry out hypothesis testing and/or confidence limit calcuation}
+\code{pmlr} returns an object of class \dQuote{\code{pmlr}}, a list with the following components:
+  \item{call}{the matched call.}
+  \item{method}{a character string indicating the method used to carry out hypothesis testing and/or confidence limit calcuation.}
   \item{separation}{an array indicating coefficients for which separation occured;
-  \code{NA} returned in the absense of separation}
-  \item{converged}{a logical value indicating whehter the IWLS algorithm judged to have converged}
-  \item{coefficients}{an array containing the coefficients of the \eqn{p} parameters for the \eqn{J} categories}
+  \code{NA} returned in the absense of separation.}
+  \item{converged}{a logical value indicating whehter the IWLS algorithm judged to have converged.}
+  \item{coefficients}{an array containing the coefficients of the \eqn{p} parameters for the \eqn{J} categories.}
   \item{var}{an array containing the variance-covariance matrices for the \eqn{J} categories. If \code{penalized=TRUE}, \code{var} is obtained based on \eqn{A^*}, the information matrix for the PLEs.}
-  \item{CI.calculate}{a logical value whether the confidence limits were computed}
-  \item{CI.lower}{returned only if \code{CI.calculate=TRUE}: an array containing the lower confidence limits from the individual parameter tests}
-  \item{CI.upper}{returned only if \code{CI.calculate=TRUE}: an array containing the upper confidence limits from the individual parameter tests}
-  \item{statistic}{an array containing the test statistics from the individual parameter tests}
-  \item{pvalue}{an array containing the p-values from the individual parameter tests}
-  \item{logLik}{the value of the log-likelihood function for the fitted model (under no constraints)}
-  \item{df}{the degrees of freedom, i.e., the number of estimated parameters in the model}
-  \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged}
-  \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under each null hypothesis}
-  \item{joint}{a logical value indicating whether the joint hypothesis tests were performed}
+  \item{CI.calculate}{a logical value whether the confidence limits were computed.}
+  \item{CI.lower}{returned only if \code{CI.calculate=TRUE}: an array containing the lower confidence limits from the individual parameter tests.}
+  \item{CI.upper}{returned only if \code{CI.calculate=TRUE}: an array containing the upper confidence limits from the individual parameter tests.}
+  \item{statistic}{an array containing the test statistics from the individual parameter tests.}
+  \item{pvalue}{an array containing the p-values from the individual parameter tests.}
+  \item{logLik}{the value of the log-likelihood function for the fitted model (under no constraints).}
+  \item{df}{the degrees of freedom, i.e., the number of estimated parameters in the model.}
+  \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged.}
+  \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under each null hypothesis.}
+  \item{joint}{a logical value indicating whether the joint hypothesis tests were performed.}
   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output.}
   \item{var0all0}{When a joint likelihood test of all betas = 0 is called, the estimated variances are also provided.  This is for information only and not displayed in the output.}
-  \item{beta0allequal}{Same as beta0all0 except for the null hypothesis that all betas are equal.}
-  \item{var0allequal}{Same as var0all0 except for the null hypothesis that all betas are equal.}
-  \item{beta0proportion}{Same as beta0all0 except for the null hypothesis that all betas are proportional.}
-  \item{var0proportion}{Same as var0all0 except for the null hypothesis that all betas are proportional.}
+  \item{beta0allequal}{same as \code{'beta0all0'} except for the null hypothesis that all betas are equal.}
+  \item{var0allequal}{same as var0all0 except for the null hypothesis that all betas are equal.}
+  \item{beta0proportion}{same as beta0all0 except for the null hypothesis that all betas are proportional.}
+  \item{var0proportion}{same as var0all0 except for the null hypothesis that all betas are proportional.}
   \item{logLik.C}{array contatining the values of log likelihood function under constraints: betas = 0; all betas are equal; and betas are proportional.}
-  \item{joint.test.all0}{a list containing joint test statisitcs, p-values and convergence status of the fitting algorithm under the constraint that all betas = 0}
-  \item{joint.test.all0$h0}{a character string describing the constraint hypothesis}
-  \item{joint.test.all0$likelihood.ratio.test}{an array contatining the test statistic and the p-values from constrained hypothesis tests all betas = 0. }
-  \item{joint.test.allequal}{Same as \code{joint.test.all0} except for that all betas are equal. --NEEDS TO BE MODIFED}
-  \item{joint.test.proportion}{Same as \code{joint.test.all0} except for that all betas are proportional. --NEEDS TO BE MODIFIED}
+  \item{joint.test.all0}{a list containing the following three components evaluated for the constrained hypothesis that all betas = 0.}
+  \item{joint.test.all0$h0}{a character string describing the constrained hypothesis}
+  \item{joint.test.all0$converged}{an array contatining whether the fitting algorithm achieved convergence for each constrained hypothesis.}
+  \item{joint.test.all0$test.h0}{an array contatining the test statistics and p-values from constrained hypothesis tests all betas = 0. }
+
+  \item{joint.test.allequal}{same as \code{'joint.test.all0'} except for the constrained hypothesis that that all betas are equal components evaluated for
+  the constrained hypothesis that all betas are equal, and for the additional component \code{'test.all0.vs.constraint'} (see below).}
+  \item{joint.test.allequal$test.all0.vs.constraint}{a data frame with test statistics and p-values for comparing the likelihoods for
+  all betas are equal vs. all betas are zero.}
+  \item{joint.test.proportion}{same as \code{'joint.test.allequal'} except for the constrained hypothesis
+  that betas are proportional.}
 }
 \description{
 Extends the approach proposed by Firth (1993) for bias reduction of MLEs
@@ -90,9 +95,8 @@ in exponential family models to the multinomial logistic regression model with g
 covariate types.  Modification of the logistic regression score function to remove
 first-order bias is equivalent to penalizing the likelihood by the Jeffreys prior,
 and yields penalized maximum likelihood estimates (PLEs) that always exist.
-[Constrained Hypothesis testing is conducted via likelihood ratio statistics. -
-what about score ????]
-Profile or [[Wald]] confidence intervals (CI) are constructed for the PLEs.
+Constrained hypothesis testing is conducted via likelihood ratio statistics.
+Profile or Wald confidence intervals (CI) are constructed for the PLEs.
 }
 \details{
 Logistic regression is one of the most widely used regression models in practice,
@@ -197,6 +201,11 @@ The baseline category can be changed to category 2 via
 \examples{
 data(hepatitis)
 
+# As reported in Bull et al. (2007)
+fit <- pmlr(cbind(HCV, nonABC) ~ group + time + group:time, data = hepatitis,
+weights = counts, method="score")
+summary(fit)
+
 data(enzymes)
 # Exclude patients in Group 4 (post-necrotic cirrhosis)
 enzymes <- enzymes[enzymes$Group != 4,]
@@ -212,7 +221,7 @@ enzymes <- data.frame(Patient = enzymes$Patient,
 # Remove 10 observations to create separation
 enzymes <- enzymes[-c(9, 18, 33, 58, 61, 77, 94, 97, 99, 100),]
 
-# Multinomial: acute viral hepatitis and aggressive chronic hepatits
+# Multinomial: Acute viral hepatitis and aggressive chronic hepatits
 # vs. persistent chronic hepatitis
 # Assign Group 2 (persistent chronic hepatitis) as baseline category
 enzymes$Group <- factor(enzymes$Group, levels=c("2","1","3"))
@@ -267,10 +276,9 @@ Partial separation in logistic discrimination.
 SAS Institute Inc. (1999)
 \emph{SAS OnlineDoc, Version 8, The LOGISTIC Procedure},
 Confidence Intervals for Parameters, Chapter 39, Section 26, Cary, NC.
-
-# As reported in Bull et al. (2007)
-fit <- pmlr(cbind(HCV, nonABC) ~ group + time + group:time, data = hepatitis, weights = counts, method="score")
-summary(fit)
+}
+\seealso{
+\code{\link{summary.pmlr}}
 }
 \keyword{htest}
 \keyword{models}
