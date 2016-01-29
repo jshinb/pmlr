@@ -32,15 +32,15 @@ hypothesis tests only due to the rarity of score based confidence limits in prac
 
 \item{joint}{a logical variable indicating whether joint hypothesis tests should be performed
 in addition to individual parameter tests.
-If \code{TRUE}, \deqn{H_{0}: \beta_{1i} = \cdots = \beta_{Ji} = 0} and \eqn{H_0: \beta_{1i} = \cdots = \beta_{Ji}} are also tested for covariate \eqn{i, i = 1, \ldots, P}.
+If \code{TRUE}, \eqn{H_{0}: \beta_{1i} = \cdots = \beta_{Ji} = 0} and \eqn{H_0: \beta_{1i} = \cdots = \beta_{Ji}} are also tested for covariate \eqn{i, i = 1, \ldots, P}.
 In addition, the proportional model: \eqn{H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} }, for each \eqn{i} is tested.
 Note that the consideration of joint hypothesis tests is only meaningful for \eqn{J > 2} categories.
 As such, an error will occur if this is set to TRUE and binomial data is entered into the function.}
 
-\item{CI.calculate}{a logical variable whether the confidence limits were computed. Default is \code{FALSE}.}
+\item{CI.calculate}{a logical variable whether the confidence limits should be computed. Default is \code{FALSE}.}
 
 \item{CI.alpha}{the significance level for the profile or Wald confidence intervals (default is 0.05).
-Relevant only if \code{CI.calcuate=TRUE}.}
+Meaningful only if \code{CI.calcuate=TRUE}.}
 
 \item{tol}{The tolerance for convergence can be specified for diagnostic purposes.
 The default is 1e-6.  Note that this does not correspond (exactly) to the precision in each estimate,
@@ -57,7 +57,7 @@ Default is \code{FALSE}.}
   \item{method}{a character string indicating the method used to carry out hypothesis testing and/or confidence limit calcuation.}
   \item{separation}{an array indicating coefficients for which separation occured;
   \code{NA} returned in the absense of separation.}
-  \item{converged}{a logical value indicating whehter the IWLS algorithm judged to have converged.}
+  \item{converged}{a logical value indicating whehter the fitting algorithm judged to have converged.}
   \item{coefficients}{an array containing the coefficients of the \eqn{p} parameters for the \eqn{J} categories.}
   \item{var}{an array containing the variance-covariance matrices for the \eqn{J} categories. If \code{penalized=TRUE}, \code{var} is obtained based on \eqn{A^*}, the information matrix for the PLEs.}
   \item{CI.calculate}{a logical value whether the confidence limits were computed.}
@@ -68,26 +68,25 @@ Default is \code{FALSE}.}
   \item{logLik}{the value of the log-likelihood function for the fitted model (under no constraints).}
   \item{df}{the degrees of freedom, i.e., the number of estimated parameters in the model.}
   \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged.}
-  \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under each null hypothesis.}
+  \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under the null hypothesis for each individual parameter.}
   \item{joint}{a logical value indicating whether the joint hypothesis tests were performed.}
   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output.}
   \item{var0all0}{When a joint likelihood test of all betas = 0 is called, the estimated variances are also provided.  This is for information only and not displayed in the output.}
-  \item{beta0allequal}{same as \code{'beta0all0'} except for the null hypothesis that all betas are equal.}
+  \item{beta0allequal}{same as \code{beta0all0} except for the null hypothesis that all betas are equal.}
   \item{var0allequal}{same as var0all0 except for the null hypothesis that all betas are equal.}
   \item{beta0proportion}{same as beta0all0 except for the null hypothesis that all betas are proportional.}
   \item{var0proportion}{same as var0all0 except for the null hypothesis that all betas are proportional.}
-  \item{logLik.C}{array contatining the values of log likelihood function under constraints: betas = 0; all betas are equal; and betas are proportional.}
+  \item{logLik.C}{array contatining the values of log likelihood function under constraints: betas = 0; all betas are equal; and betas are proportional. This is for information only and not displayed in the output.}
   \item{joint.test.all0}{a list containing the following three components evaluated for the constrained hypothesis that all betas = 0.}
   \item{joint.test.all0$h0}{a character string describing the constrained hypothesis}
-  \item{joint.test.all0$converged}{an array contatining whether the fitting algorithm achieved convergence for each constrained hypothesis.}
-  \item{joint.test.all0$test.h0}{an array contatining the test statistics and p-values from constrained hypothesis tests all betas = 0. }
+  \item{joint.test.all0$converged}{an array contatining whether the fitting algorithm achieved convergence under the constrained hypothesis for each term.}
+  \item{joint.test.all0$test.h0}{an array contatining the test statistics and p-values from constrained hypothesis tests that all betas = 0.}
 
-  \item{joint.test.allequal}{same as \code{'joint.test.all0'} except for the constrained hypothesis that that all betas are equal components evaluated for
-  the constrained hypothesis that all betas are equal, and for the additional component \code{'test.all0.vs.constraint'} (see below).}
-  \item{joint.test.allequal$test.all0.vs.constraint}{a data frame with test statistics and p-values for comparing the likelihoods for
-  all betas are equal vs. all betas are zero.}
-  \item{joint.test.proportion}{same as \code{'joint.test.allequal'} except for the constrained hypothesis
-  that betas are proportional.}
+  \item{joint.test.allequal}{same as \code{'joint.test.all0'} except for that all betas are equal, and for the additional component \code{'test.all0.vs.constraint'} (see below).}
+  \item{joint.test.allequal$test.all0.vs.constraint}{a data frame containing the test statistics and p-values obtained from comparing the likelihoods for
+  all betas are equal vs. all betas = 0.}
+  \item{joint.test.proportion}{same as \code{'joint.test.allequal'} except for that the constrained hypothesis
+  is that betas are proportional.}
 }
 \description{
 Extends the approach proposed by Firth (1993) for bias reduction of MLEs
@@ -225,7 +224,7 @@ enzymes <- enzymes[-c(9, 18, 33, 58, 61, 77, 94, 97, 99, 100),]
 # vs. persistent chronic hepatitis
 # Assign Group 2 (persistent chronic hepatitis) as baseline category
 enzymes$Group <- factor(enzymes$Group, levels=c("2","1","3"))
-fit <- pmlr(Group ~ AST + GLDH, data = enzymes, method="wald")
+fit <- pmlr(Group ~ AST + GLDH, data = enzymes, method="wald", CI.calculate=TRUE)
 summary(fit)
 
 # Binomial: Acute viral hepatitis vs. persistent chronic hepatitis

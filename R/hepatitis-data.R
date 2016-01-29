@@ -14,19 +14,19 @@
 #'
 #' @format A data frame with 218 rows and the following 6 columns:
 #'
-#' \tabular{ll}{
-#' \code{city} \tab Subjects were recruited from 3 Canadian Red Cross Society Blood Centres
+#' \tabular{lcl}{
+#' \code{city} \tab\tab Subjects were recruited from 3 Canadian Red Cross Society Blood Centres
 #' and 13 university-affiliated hopsitals in 3 cities: Toronto, Hamilton and Winnipeg.\cr
-#' \code{group} \tab Eligible subjects were assigned to one of two allogenic blood recipient groups.
+#' \code{group} \tab\tab Eligible subjects were assigned to one of two allogenic blood recipient groups.
 #' One group received products that had only routine Canadian transfusion-transmissible
 #' disease marker screening (no-withhold).
 #' The other group received only products that were not positive for NANB surrogate markers (withhold). \cr
-#' \code{time} \tab Hepatitis C (HCV) screening was introduced in Canada in May, 1990.
+#' \code{time} \tab\tab Hepatitis C (HCV) screening was introduced in Canada in May, 1990.
 #' Subjects were recruited into the study before (pre) and after (post) the introduction of
 #' anti-HCV testing. \cr
-#' \code{HCV} \tab Post-transfusion HCV hepatitis present (1) or absent (0). \cr
-#' \code{nonABC} \tab Post-transfusion non-A, non-B, non-C hepatitis present (1) or absent (0). \cr
-#' \code{counts} \tab Number of subjects.
+#' \code{HCV} \tab\tab Post-transfusion HCV hepatitis present (1) or absent (0). \cr
+#' \code{nonABC} \tab\tab Post-transfusion non-A, non-B, non-C hepatitis present (1) or absent (0). \cr
+#' \code{counts} \tab\tab Number of subjects.
 #'     }
 #' @source Blajchman M. A., Bull, S. B. and Feinman S. V. for the Canadian
 #' Post-Transfusion Hepatitis Prevention Study Group (1995) Post-transfusion hepatitis:

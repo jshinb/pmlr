@@ -4,7 +4,8 @@ Title: What the Package Does (Title Case)
 Version: 1.1.1
 Date: 2016-01-14
 Author: Sarah Colby <colby@lunenfeld.ca>, Sophia Lee, Juan Pablo Lewinger,
-    Shelley Bull <bull@lunenfeld.ca>, Michael Rotondi <mrotondi@yorku.ca>
+    Shelley Bull <bull@lunenfeld.ca>, Michael Rotondi <mrotondi@yorku.ca>,
+    Ji-Hyung Shin <shin.jihyung@gmail.com>
 Maintainer: Sarah Colby <mrotondi@yorku.ca>
 Description: Extends the approach proposed by Firth (1993) for bias reduction of
     MLEs in exponential family models to the multinomial logistic regression model

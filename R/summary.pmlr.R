@@ -12,7 +12,7 @@
 #' all betas are equal, and betas are proportional.}
 #' \item{test.all0.vs.constraint}{Returned only if joint hypothesis testing was done:
 #' An array containing likelihood ratio test statistics and p-values testing all \eqn{H_0}: betas=0 vs. other constraints (\eqn{H_C}),
-#' which are 'all betas are equal' and 'betas are proportion'.}
+#' which can be 'all betas are equal' or 'betas are proportion'.}
 #' @export
 summary.pmlr <- function(object, ...) {
   ret=list()
