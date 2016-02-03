@@ -117,24 +117,23 @@ summary.pmlr <- function(object, ...) {
   output2 <- NULL
   if (object$joint) {
     #cat("\n\n Joint Statistical Tests \n\n")
-    output2.dimnames <- c(paste("Estimate (b_{i,1})",sep=""), "ChiSq", "Pr(>ChiSq)")
+    output2.dimnames <- c(paste("Estimate (b_{p,1})",sep=""), "ChiSq", "Pr(>ChiSq)")
     output3.dimnames <-  output2.dimnames[-1]
     output2 <- array(data = NA, dim = c(p,length(output2.dimnames),3))
     output3 <- array(data = NA, dim = c(p,length(output3.dimnames),2))
     dimnames(output2) <-
       list(dimnames(object$coefficients)[[2]],output2.dimnames,
-           c("H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (all zero)",
-             "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (all equal)",
-             "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate, proporionality)"))
+           c("H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (all zero)",
+             "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (all equal)",
+             "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate, proporionality)"))
     dimnames(output3) <-
       list(dimnames(object$coefficients)[[2]],output3.dimnames,
-           c("H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (all equal)",
-             "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate, proporionality)"))
+           c("H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (all equal)",
+             "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate, proporionality)"))
 
     output2[,1,1] <- NA
 
     testres.all0 <- object$joint.test.all0$test.h0
-    print(object$joint.test.all0)
     testres.allequal <- object$joint.test.allequal$test.h0
     testres.proportion <- object$joint.test.proportion$test.h0
 
@@ -164,10 +163,10 @@ summary.pmlr <- function(object, ...) {
     #Proportionality is only valid with >= 2 categories...Set to NA if J < 2 by pmlr.R
     if ( is.na(output2[,1,3]) || is.na(output2[,2,3])  )
     {
-      cat( "\n The Propotionality test: H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} requires at least 2 categories. \n \n")
+      cat( "\n The Propotionality test: H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} requires at least 2 categories. \n \n")
     }
     else {
-      #cat("\nH_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate, proporionality)\n\n")
+      #cat("\nH_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate, proporionality)\n\n")
       #print(output2[,,3])
     }
 
@@ -186,7 +185,7 @@ summary.pmlr <- function(object, ...) {
   }
 
   class(ret) <- "summary.pmlr"
-  return(ret)
+  ret
 
 }
 

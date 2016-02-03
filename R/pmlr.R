@@ -28,17 +28,24 @@
 #' hypothesis tests only due to the rarity of score based confidence limits in practice.
 #' @param joint a logical variable indicating whether joint hypothesis tests should be performed
 #' in addition to individual parameter tests.
-#' If \code{TRUE}, \eqn{H_{0}: \beta_{1i} = \cdots = \beta_{Ji} = 0} and \eqn{H_0: \beta_{1i} = \cdots = \beta_{Ji}} are also tested for covariate \eqn{i, i = 1, \ldots, P}.
-#' In addition, the proportional model: \eqn{H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} }, for each \eqn{i} is tested.
-#' Note that the consideration of joint hypothesis tests is only meaningful for \eqn{J > 2} categories.
-#' As such, an error will occur if this is set to TRUE and binomial data is entered into the function.
-#' @param CI.calculate a logical variable whether the confidence limits should be computed. Default is \code{FALSE}.
+#' If \code{TRUE}, the following three (constrained) hypotheses are tested additionally
+#' for covariates \eqn{p = 1, \ldots, P}{p = 1, ..., P}:
+#' \deqn{H_{0}: \beta_{p1} = \cdots = \beta_{pJ} = 0}{H[0]: \beta[p1] = ... = \beta[pJ] = 0;}
+#' \deqn{H_0: \beta_{p1} = \cdots = \beta_{pJ}}{H[0]: \beta[p1] = ... = \beta[pJ];}
+#' \deqn{H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1}}{H[0]: b[p,J] = J b[p,1], b[p,J-1] = (J-1) b[p,1], ... , b[p,2] = 2 b[p,1],}
+#' where \eqn{b_{p,j}}{b[p,j]} is equivalent to \eqn{\beta_{pj}}{\beta[pj]}.
+#' This is meaningful only when the number \eqn{J+1} of response categories is greater than 2.
+#' Thus, an error will occur if this is set to TRUE and binomial data is entered into the function.
+#' @param CI.calculate a logical variable whether the profile (if \code{method="likelihood"}) or Wald (if \code{method="wald"})
+#' confidence limits should be computed. Default is \code{FALSE}.
 #' @param CI.alpha the significance level for the profile or Wald confidence intervals (default is 0.05).
 #' Meaningful only if \code{CI.calcuate=TRUE}.
 #' @param tol The tolerance for convergence can be specified for diagnostic purposes.
 #' The default is 1e-6.  Note that this does not correspond (exactly) to the precision in each estimate,
 #' as the tolerance is defined as the sum of the absolute value of the elements of the `step'
-#' \eqn{=A^{-1}_{(t)}U(B^*_{(t)}} in the modified Newton-Raphson algorithm.
+#' \eqn{=A^{-1}_{(t)}U(B^{*}_{(t)})}{=(A^-1[(t)])U(B^*[(t)])}, where \eqn{A^-1 [(t)]} is inverse of the Fisher's information matrix,
+#' and \eqn{B^{*}_{(t)}}{B^* [(t)]} is the vector of the penalized coefficient estimates, both evaluated at the \eqn{t}-th iteration
+#' in the modified Newton-Raphson algorithm.
 #' Nonetheless, higher tolerance values may reduce computation times and facilitate convergence in some cases.
 #' @param verbose Logical: TRUE displays parameter values after each iteration and states when completion of each routine has occurred.
 #' Default is \code{FALSE}.
@@ -63,27 +70,27 @@
 #' We consider a multicategory outcome \eqn{y} that is a multinomial variable with \eqn{J + 1}
 #' categories.  For each category \eqn{j (j = 1, \ldots, J)} there is a regression function
 #' in which the log odds of response in category \eqn{j}, relative to category 0, is a linear
-#' function of regression parameters and a vector \eqn{\bold{x}} of \eqn{P} covariates
+#' function of regression parameters and a vector \eqn{\bold{x}}{x} of \eqn{P} covariates
 #' (including a constant):
-#' \eqn{\log\{\mathrm{prob}(y = j| \bold{x})/\mathrm{prob}(y = 0 | \bold{x})\} = \bold{\beta}_{j}^T \bold{x}}.
-#' Let \eqn{\bold{y}_i} be a \eqn{J \times 1} vector of indicators for the observed response
-#' category for observation \eqn{i}, with the corresponding \eqn{J \times 1}
-#' vector of probabilities \eqn{\bold{\Theta}_{i} = (\Theta_{i1}, \ldots, \Theta_{iJ})^T}.
-#' The vector of MLEs, \eqn{\hat{B} = vec[(\bold{\hat{\beta}}_1, \ldots, \bold{\hat{\beta}}_J)^T]},
-#' is estimated from observations \eqn{(\bold{y}_i,\bold{x}_i), i = 1, \ldots, n},
+#' \eqn{\log\{\mathrm{prob}(y = j| \bold{x})/\mathrm{prob}(y = 0 | \bold{x})\} = \bold{\beta}_{j}^T \bold{x}}{log{prob(y = j | x)/prob(y = 0 | x)} = \beta[j]^T x}.
+#' Let \eqn{\bold{y}_i}{y[i]} be a \eqn{J \times 1}{Jx1} vector of indicators for the observed response
+#' category for observation \eqn{i}, with the corresponding \eqn{J \times 1}{Jx1}
+#' vector of probabilities \eqn{\bold{\Theta}_{j} = (\Theta_{1j}, \ldots, \Theta_{Pj})^T}{\Theta[j] = (\Theta[1j], ..., \Theta[Pj])^T}.
+#' The vector of MLEs, \eqn{\hat{B} = vec[(\bold{\hat{\beta}}_1, \ldots, \bold{\hat{\beta}}_J)^T]}{\hat{B} = vec[(\hat{\beta}[1], ..., \hat{\beta}[J])^T]},
+#' is estimated from observations \eqn{(\bold{y}_i,\bold{x}_i), i = 1, \ldots, n}{(y[i],x[i]), i = 1, ..., n},
 #' by solving the score equations of the log-likelihood \eqn{l(B)}.
-#' We denote the score function by \eqn{U(B)} and the \eqn{PJ \times PJ}
+#' We denote the score function by \eqn{U(B)} and the \eqn{PJ \times PJ}{PJxPJ}
 #' Fisher information matrix by \eqn{A = A(B)}.
 #'
-#' The order \eqn{n^{-1}} bias of estimates based on the usual likelihood \eqn{L(B)}
+#' The order \eqn{n^{-1}}{n^-1} bias of estimates based on the usual likelihood \eqn{L(B)}
 #' is removed by applying the penalty \eqn{|A|^{1/2}}, and basing estimation on the
 #' penalized likelihood \eqn{L^*(B) = L(B) |A|^{1/2}}.
 #' The vector \eqn{\hat{B}^*} of penalized estimates (PLEs) is the solution to
-#' the score equations of the penalized log-likelihood \eqn{l^*(B) = l(B) + \frac{1}{2} \log{|A|}}.
+#' the score equations of the penalized log-likelihood \eqn{l^*(B) = l(B) + \frac{1}{2} \log{|A|}}{l^*(B) = l(B) + 1/2 log{|A|}}.
 #' The introduction of bias into the score function through the penalty removes the leading
 #' term in the asymptotis bias of the MLEs.
 #' The modified score function proposed by Firth for the binomial logistic model extends directly
-#' to the multinomial model as \eqn{U^*(B) = U(B) - A \, b(B)}.
+#' to the multinomial model as \eqn{U^*(B) = U(B) - A b(B)}.
 #' The bias term \eqn{b(B)} is the leading term in the asymptotic bias of the multinomial MLEs,
 #' obtained from the Taylor series expansion of the log-likelihood (Cox and Snell, 1968)
 #' and is a function of the matrix of third derivatives of \eqn{l(B)} with respect to \eqn{B}
@@ -91,28 +98,28 @@
 #'
 #' The PLEs are obtained by a modified Fisher scoring algorithm.  Using \eqn{t} to
 #' denote the iteration number, the modified iterative updating equations are:
-#'  \deqn{B^*_{(t+1)} = B^*_{(t)} + A^{-1}_{(t)}U^*(B^*_{(t)}) = B^*_{(t)} + b(B^*_{(t)}) + A^{-1}_{(t)}U(B^*_{(t)}).}
+#'  \deqn{B^*_{(t+1)} = B^*_{(t)} + A^{-1}_{(t)}U^*(B^*_{(t)}) = B^*_{(t)} + b(B^*_{(t)}) + A^{-1}_{(t)}U(B^*_{(t)})}{B^* [(t+1)] = B^* [(t)] + A^-1 [(t)] U^*(B^* [(t)]) = B^*_[(t)] + b(B^* [(t)]) + A^-1 [(t)]U(B^* [(t)])}
 #'  Thus, in comparison to the usual updating equation used to obtain the MLEs,
 #'  the score function modification operates by applying the asymptotic bias correction at each step in the iterative process.
 #'  This prevents estimates from going off to infinity and failing to converge when there is separation in the data.
 #'
-#'  Symmetric Wald-type CIs for \eqn{\beta_{jp}} can be constructed using \eqn{Var^{* 1/2}(\hat{\beta}^*_{jp})},
-#'  obtained from the inverse of \eqn{A^*}, however, performance is expected to be poor in situations,
-#'  where separation is likely to occur.
+#'  Symmetric Wald-type CIs for \eqn{\beta_{jp}}{\beta[jp]} can be constructed using \eqn{Var^{* 1/2}(\hat{\beta}^*_{jp})}{Var^{* 1/2}(hat{\beta}^* [jp])},
+#'  for \eqn{p = 1, ..., P} and \eqn{j = 1, ..., J}, obtained from the inverse of \eqn{A^*};
+#'  however, performance is expected to be poor in situations, where separation is likely to occur.
 #'  Asymmetric CIs for the PLEs can be constructed from the profile log-likelihood for
-#'  \eqn{\beta_{jp}}, which is the function \eqn{l^*_0(B(s))}, where \eqn{B(s)}
+#'  \eqn{\beta_{jp}}{\beta[jp]}, which is the function \eqn{l^*_0(B(s))}{l^*[0](B(s))}, where \eqn{B(s)}
 #'  is the argument that maximizes \eqn{l^*} under the single-parameter constraint
-#'  \eqn{H_0: \beta_{jp} = s}.  The \eqn{100(1 - \alpha)\%} CI for \eqn{\beta_{jp}}
+#'  \eqn{H_0: \beta_{jp} = s}{H[0]: \beta[jp] = s}.  The \eqn{100(1 - \alpha)\%}{100(1 - \alpha)\%} CI for \eqn{\beta_{jp}}{\beta[jp]}
 #'  is given by all parameter values that are compatible with the data
-#'  (i.e., all \eqn{s} such that the likelihood ratio statistic \eqn{LR_P(s) \le q},
+#'  (i.e., all \eqn{s} such that the likelihood ratio statistic \eqn{LR_P(s) \le q}{LR[P](s) <= q},
 #'  where \eqn{q} is the \eqn{1 - \alpha} percentile of the \eqn{\chi^2} distribution).
-#'  This is equivalent to \eqn{l^*_0(B(s)) \ge l^*(\hat{B}^*) - \frac{1}{2} q}.
+#'  This is equivalent to \eqn{l^*_0(B(s)) \ge l^*(\hat{B}^*) - \frac{1}{2} q}{l^*[0](B(s)) >= l^*(\hat{B}^*) - (1/2)q}.
 #'  The endpoints of the interval are then found by numerically solving the equality for
 #'  values of \eqn{s}.  Based on the algorithm employed in SAS PROC LOGISTIC for MLEs,
-#'  our method for finding these roots does not require computing \eqn{l^*_0(B(s))},
+#'  our method for finding these roots does not require computing \eqn{l^*_0(B(s))}{l^*[0](B(s))},
 #'  which in itself would involve maximizing \eqn{l^*(B)},
 #'  but proceeds directly by solving the constrained optimization problem:
-#'  maximize \eqn{l^*(B)} such that \eqn{l^*_(B) = l^*(\hat{B}^*) - \frac{1}{2} q} and \eqn{\beta_{jp} = s}.
+#'  maximize \eqn{l^*(B)} such that \eqn{l^*_(B) = l^*(\hat{B}^*) - \frac{1}{2} q}{l^*_(B) = l^*(\hat{B}^*) - (1/2)q} and \eqn{\beta_{jp} = s}{\beta_[jp] = s}.
 #'  We, however, modify the starting values in the iterative scheme used by SAS to obtain a
 #'  new algorithm that is slower, but simple and more robust (see Bull et al. 2007 for details).
 #'
@@ -135,8 +142,8 @@
 #'   \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged.}
 #'   \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under the null hypothesis for each individual parameter.}
 #'   \item{joint}{a logical value indicating whether the joint hypothesis tests were performed.}
-#'   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output.}
-#'   \item{var0all0}{When a joint likelihood test of all betas = 0 is called, the estimated variances are also provided.  This is for information only and not displayed in the output.}
+#'   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output. Not returned when \code{method="wald"}.}
+#'   \item{var0all0}{When a joint likelihood test of all betas = 0 is called, the estimated variances are also provided.  This is for information only and not displayed in the output. Not returned when \code{method="wald"}.}
 #'   \item{beta0allequal}{same as \code{beta0all0} except for the null hypothesis that all betas are equal.}
 #'   \item{var0allequal}{same as var0all0 except for the null hypothesis that all betas are equal.}
 #'   \item{beta0proportion}{same as beta0all0 except for the null hypothesis that all betas are proportional.}
@@ -156,11 +163,11 @@
 #' @note This implementation is not a true scoring or Newton-type algorithm because
 #' it updates with the inverse of \eqn{A}, the Fisher information matrix for the MLEs,
 #' rather than the information for the PLEs, \eqn{A^*}, which includes an additional term
-#' corresponding to the second derivatives of the penalty: \eqn{\frac{1}{2} \log |A|}.
+#' corresponding to the second derivatives of the penalty: \eqn{\frac{1}{2} \log |A|}{(1/2)log(|A|)}.
 #' As a result, convergence using the modified scoring algorithm for the PLEs is slower
 #' than a scoring algorithm based on \eqn{A^*}, which converges at a quadratic rate.
 #' For well behaved and larger datasets this usually means no more than 2 or 3 steps
-#' beyond that required for the MLEs.  Starting values of \eqn{\beta{jp} = 0} are used
+#' beyond that required for the MLEs.  Starting values of \eqn{\beta{pj} = 0}{\beta[pj] = 0} are used
 #' and are generally satisfactory.  For smaller datasets (i.e., less than 50 observations)
 #' and especially datasets in which there are infinite MLEs, convergence is slower
 #' and could take up to 35 or 40 iterations.  In datasets with separations, starting values
@@ -354,30 +361,27 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
   dimnames(stat) <- dimnames(pval) <- list("", colnames(x), colnames(y))
 
   if (joint){
-    ## JS Added 2015-12-15
-    ## to create the following objects only when performing the joint test
-    beta0all0 <- var0all0 <- beta0allequal <- var0allequal <- beta0proportion <- var0proportion <- array(data = NA, dim = c(1,p,J))
-    dimnames(beta0all0) <- dimnames(var0all0) <- dimnames(beta0allequal) <- dimnames(var0allequal) <- dimnames(beta0proportion) <- dimnames(var0proportion) <-
-      list("", colnames(x), colnames(y))
-    list("", colnames(x), c("H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0",
-                            "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J}",
-                            "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1}"))
-    ## stat.all0.vs.constraint and pval.all0.vs.constraint need not be evalueated
-    ## under all0-constrianed hypothesis - "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0"
-    stat.all0.vs.constraint <- pval.all0.vs.constraint <- stat.joint <- pval.joint <- l0.joint <- array(data = NA, dim = c(1,p,3))
-    dimnames(stat.all0.vs.constraint) <- dimnames(pval.all0.vs.constraint) <- dimnames(stat.joint) <- dimnames(pval.joint) <- dimnames(l0.joint) <-
-      list("", colnames(x),
-           c("H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0",
-             "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J}",
-             "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1}"))
+      ## JS Added 2015-12-15
+      ## to create the following objects only when performing the joint test
+      beta0all0 <- var0all0 <- beta0allequal <- var0allequal <- beta0proportion <- var0proportion <- array(data = NA, dim = c(1,p,J))
+      dimnames(beta0all0) <- dimnames(var0all0) <- dimnames(beta0allequal) <- dimnames(var0allequal) <- dimnames(beta0proportion) <- dimnames(var0proportion) <-
+          list("", colnames(x), colnames(y))
+      ## stat.all0.vs.constraint and pval.all0.vs.constraint need not be evalueated
+      ## under all0-constrianed hypothesis - "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0"
+      stat.all0.vs.constraint <- pval.all0.vs.constraint <- stat.joint <- pval.joint <- l0.joint <- array(data = NA, dim = c(1,p,3))
+      dimnames(stat.all0.vs.constraint) <- dimnames(pval.all0.vs.constraint) <- dimnames(stat.joint) <- dimnames(pval.joint) <- dimnames(l0.joint) <-
+          list("", colnames(x),
+               c("H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0",
+                 "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J}",
+                 "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1}"))
 
-    stat.all0.vs.constraint <- pval.all0.vs.constraint <- pval.all0.vs.constraint[,,-1,drop=FALSE]
-    test.h0.all0 <- test.h0.allequal <- test.h0.proportion <- list()
+      stat.all0.vs.constraint <- pval.all0.vs.constraint <- pval.all0.vs.constraint[,,-1,drop=FALSE]
+      test.h0.all0 <- test.h0.allequal <- test.h0.proportion <- list()
   }
 
   converged <- NA
   if (method == "likelihood") {
-    ## Likelihood ratio test for H_0: b_{i,j} = 0 (ith covariate, jth category)
+    ## Likelihood ratio test for H_0: b_{p,j} = 0 (p-th covariate, jth category)
     testRun <- test.LR(x, y, wt, mt, B, h0 = 1, penalized, tol = tol, verbose=verbose);
     if( !any(testRun$conv) )
       warning("test.LR: algorithm did not converge\n")
@@ -414,11 +418,11 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       }
     }#if(profileCI.calculate) ends
     if (joint) {
-      # h0=2: Likelihood ratio test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)
+      # h0=2: Likelihood ratio test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)
       testRun <- test.LR(x, y, wt, mt, B, h0 = 2, penalized, tol = tol, verbose=verbose);
 
       test.h0.colnames = c("ChiSq","Pr(>ChiSq)")
-      test.h0.all0$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)"
+      test.h0.all0$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)"
       test.h0.all0$converged <- testRun$conv
       test.h0.all0$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
       dimnames(test.h0.all0$test.h0) <- list( colnames(x), test.h0.colnames )
@@ -429,11 +433,11 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       beta0all0 <- testRun$beta0.array
       var0all0 <- testRun$var0.array
 
-      # h0=3: Likelihood ratio test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (ith covariate)
+      # h0=3: Likelihood ratio test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)
       testRun <- test.LR(x, y, wt, mt, B, h0 = 3, penalized, tol = tol, verbose=verbose);
       beta0allequal <- testRun$beta0.array
       var0allequal <- testRun$var0.array
-      test.h0.allequal$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (ith covariate)"
+      test.h0.allequal$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)"
       test.h0.allequal$converged <- testRun$conv
       test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
       test.h0.allequal$test.all0.vs.constraint <-
@@ -448,11 +452,11 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       test.h0.allequal$test.all0.vs.constraint[,"Pr(>ChiSq)"] <- pchisq(chisq, df=1, lower.tail=F)
 
 
-      # h0=4: Likelihood ratio test for proportionality: H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)
+      # h0=4: Likelihood ratio test for proportionality: H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)
       if (J >= 2) {
         testRun <- test.LR(x, y, wt, mt, B, h0 = 4, penalized, tol = tol, verbose=verbose);
         l0.joint[,,3] <- t(testRun$l0)
-        test.h0.proportion$h0 <- "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)"
+        test.h0.proportion$h0 <- "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)"
         test.h0.proportion$converged <- testRun$conv
         test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
         test.h0.proportion$test.all0.vs.constraint <-
@@ -485,7 +489,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
   if (useAstar.wald) Ainv <- Astarinv# ** when is it being used?
   # Wald test
   if (method == "wald") {
-    ## Wald test for H_0: b_{i,j} = 0 (ith covariate, jth category)
+    ## Wald test for H_0: b_{p,j} = 0 (p-th covariate, jth category)
     for (i in 1:J) {
       stat[,,i] <- (coef[,,i]/sqrt(diag(var[,,i])))^2
       pval[,,i] <- pchisq(stat[,,i], df = 1, lower.tail = FALSE)
@@ -503,32 +507,32 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
     test.unconstrained$pvalue <- pval
 
     if (joint) {
-      # Wald test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)
+      # Wald test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)
       for (i in 1:p) {
         C <- matrix(data = 0, nrow = J, ncol = p * J); C[1:J,(((i - 1) * J) + 1):(i * J)] <- diag(J)
         stat.joint[1,i,1] <- test.wald(vec(t(B)), Ainv, C)
         pval.joint[1,i,1] <- pchisq(stat.joint[1,i,1], df = J, lower.tail = FALSE)
       }
-      test.h0.all0$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)"
+      test.h0.all0$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)"
       test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
       test.h0.all0$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
       dimnames(test.h0.all0$test.h0) <- list(colnames(x), test.h0.colnames)
       test.h0.all0$test.h0[,"ChiSq"] <- stat.joint[,,1]
       test.h0.all0$test.h0[,"Pr(>ChiSq)"] <- pval.joint[,,1]
 
-      # Wald test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} for the ith covariate
+      # Wald test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} for the p-th covariate
       for (i in 1:p) {
         C <- matrix(data = 0, nrow = J-1, ncol = p *J); C[1:(J - 1), ((i - 1) * J + 1):((i * J) - 1)] <- diag(J - 1); for (j in (1:J - 1)) C[j,((i - 1) * J) + 1 + j] <- (-1)
         stat.joint[1,i,2] <- test.wald(vec(t(B)), Ainv, C)
         pval.joint[1,i,2] <- pchisq(stat.joint[1,i,2], df = J - 1, lower.tail = FALSE)
       }
-      test.h0.allequal$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (ith covariate)"
+      test.h0.allequal$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)"
       test.h0.allequal$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
       dimnames(test.h0.allequal$test.h0) <- list(colnames(x), test.h0.colnames)
       test.h0.allequal$test.h0[,"ChiSq"] <- stat.joint[,,2]
       test.h0.allequal$test.h0[,"Pr(>ChiSq)"] <- pval.joint[,,2]
 
-      # Wald test for proportionality, H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)
+      # Wald test for proportionality, H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)
       if (J >= 2) {
         for (i in 1:p) {
           C <- matrix(data = 0, nrow = J-1, ncol = p *J)
@@ -541,7 +545,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
         stat.joint[1,,3] <- NA
         pval.joint[1,,3] <- NA
       }
-      test.h0.proportion$h0 <- "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)"
+      test.h0.proportion$h0 <- "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)"
       test.h0.proportion$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
       dimnames(test.h0.proportion$test.h0) <- list(colnames(x), test.h0.colnames)
       test.h0.proportion$test.h0[,"ChiSq"] <- stat.joint[,,3]
@@ -553,7 +557,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
 
   ####------------------------------ NEED TO FIX!!! ------------------------------####
   if (method == "score") {
-    ## Score test for H_0: b_{i,j} = 0 (ith covariate, jth category)
+    ## Score test for H_0: b_{p,j} = 0 (p-th covariate, jth category)
     ## carry out estimation and score test undr the unconstrained hypothesis when the user intends to
     testRun <- test.score(x, y, wt, mt, B, h0 = 1, penalized, verbose=verbose);
     for (i in 1:J) {
@@ -580,9 +584,9 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
     if (verbose) { cat("Score Tests Complete. \n") }
 
     if (joint) {
-      ## Score test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)
+      ## Score test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)
       testRun <- test.score(x, y, wt, mt, B, h0 = 2, penalized, verbose = verbose)
-      test.h0.all0$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} = 0 (ith covariate)"
+      test.h0.all0$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} = 0 (p-th covariate)"
       test.h0.all0$converged <- testRun$conv
       test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
       test.h0.all0$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
@@ -596,16 +600,15 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       if(!any(testRun$conv))
         warning("test.score: algorithm did not converge - joint test for all beta=0 \n")
 
-      ## Score test for H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (ith covariate)
+      ## Score test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)
       testRun <- test.score(x, y, wt, mt, B, h0 = 3, penalized, verbose = verbose);
-      test.h0.allequal$h0 <- "H_0: b_{i,1} = b_{i,2} = ... = b_{i,J} (ith covariate)"
+      test.h0.allequal$h0 <- "H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)"
       test.h0.allequal$converged <- testRun$conv
       test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
       test.h0.allequal$test.all0.vs.constraint <-
         test.h0.allequal$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
       dimnames(test.h0.allequal$test.all0.vs.constraint) <-
         dimnames(test.h0.allequal$test.h0) <- list(colnames(x), test.h0.colnames)
-      #test.h0.allequal$test.h0[,"logLik"] <-
       l0.joint[,,2] <- t(testRun$l0)
       test.h0.allequal$test.h0[,"ChiSq"] <- t(testRun$statistic)
       test.h0.allequal$test.h0[,"Pr(>ChiSq)"] <- t(testRun$pvalue)
@@ -618,16 +621,15 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       if(!any(testRun$conv))
         warning("test.score: algorithm did not converge - joint test for all beta equal \n")
 
-      ## Score test for proportionality, H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)
+      ## Score test for proportionality, H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)
       if (J >= 2) {
         testRun <- test.score(x, y, wt, mt, B, h0 = 4, penalized, verbose = verbose);
-        test.h0.proportion$h0 <- "H_0: b_{i,J} = J*b_{i,1}, b_{i,J-1} = (J-1)*b_{i,1}, ... , b_{i,2} = 2*b_{i,1} (ith covariate)"
+        test.h0.proportion$h0 <- "H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)"
         test.h0.proportion$converged <- testRun$conv
         test.h0.colnames <- c("ChiSq","Pr(>ChiSq)")
         test.h0.proportion$test.all0.vs.constraint <- test.h0.proportion$test.h0 <- matrix(NA,ncol=length(test.h0.colnames),nrow=p)
         dimnames(test.h0.proportion$test.all0.vs.constraint) <-
           dimnames(test.h0.proportion$test.h0) <- list(colnames(x), test.h0.colnames)
-        #test.h0.proportion$test.h0[,"logLik"] <-
         l0.joint[,,3] <- t(testRun$l0)
         test.h0.proportion$test.h0[,"ChiSq"] <- t(testRun$statistic)
         test.h0.proportion$test.h0[,"Pr(>ChiSq)"] <- t(testRun$pvalue)
@@ -678,21 +680,24 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
 
     ret$joint = joint
     if(joint){
-      ret$beta0all0 = beta0all0
-      ret$var0all0 = var0all0
-
-      ret$beta0allequal = beta0allequal
-      ret$var0allequal = var0allequal
-
-      ret$beta0proportion = beta0proportion
-      ret$var0proportion = var0proportion
-
-      ## Joint test results
-      ret$logLik.joint = l0.joint
-      ## joint test more info
-      ret$joint.test.all0 = test.h0.all0
-      ret$joint.test.allequal = test.h0.allequal
-      ret$joint.test.proportion = test.h0.proportion
+        if(method!="wald"){
+            #not available for the Wald test
+            ret$beta0all0 = beta0all0
+            ret$var0all0 = var0all0
+            
+            ret$beta0allequal = beta0allequal
+            ret$var0allequal = var0allequal
+            
+            ret$beta0proportion = beta0proportion
+            ret$var0proportion = var0proportion
+        
+            ## Joint test results
+            ret$logLik.joint = l0.joint
+        }
+        ## joint test more info
+        ret$joint.test.all0 = test.h0.all0
+        ret$joint.test.allequal = test.h0.allequal
+        ret$joint.test.proportion = test.h0.proportion
     } #if(joint) ends
 
   }
