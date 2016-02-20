@@ -74,7 +74,7 @@ Default is \code{FALSE}.}
   \item{pvalue}{an array containing the p-values from the individual parameter tests.}
   \item{logLik}{the value of the log-likelihood function for the fitted model (under no constraints).}
   \item{df}{the degrees of freedom, i.e., the number of estimated parameters in the model.}
-  \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged.}
+  \item{converged.H0}{an array containing the logical values whether the fitting algorithm for the null model for each inividual parameter is jusdged to have converged.}
   \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under the null hypothesis for each individual parameter.}
   \item{joint}{a logical value indicating whether the joint hypothesis tests were performed.}
   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output. Not returned when \code{method="wald"}.}

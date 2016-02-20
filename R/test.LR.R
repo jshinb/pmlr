@@ -2,7 +2,7 @@ test.LR <- function(x, y, wt, mt, B, h0, penalized, tol = 1e-6, verbose = FALSE,
    p <- nrow(B) # p covariates
    J <- ncol(B) # J categories
 
-  
+
    ys <- 1 - apply(y,1,sum)
 
 # under H_a
@@ -17,23 +17,27 @@ test.LR <- function(x, y, wt, mt, B, h0, penalized, tol = 1e-6, verbose = FALSE,
 
    if (h0 == 1) {ntests <- p * J;   size <- J;  L <- 1}
    if (h0 == 2) {ntests <- p;       size <- 1;  L <- J}
-   if (h0 == 3) {ntests <- p;       size <- 1;  L <- J - 1}
-   if (h0 == 4) {ntests <- p;       size <- 1;  L <- J - 1}
+   if (h0 == 3 | h0 == 5) {ntests <- p;       size <- 1;  L <- J - 1}
+   if (h0 == 4 | h0 == 6) {ntests <- p;       size <- 1;  L <- J - 1}
 
    l0 <- pvalue <- matrix(data=0, nrow=ntests, ncol=1)
    conv.vec <- NULL
   ## var0.array - need to think about!
    if(h0 == 1) {
-       B0.array <- var0.array <- NULL
+       B0.array <- var0.array <- Ainv0.array <- NULL
    }
 
    ## ** MODIFIED
 
    if(h0 > 1) {
-       B0.array <- var0.array <-  array( NA,dim = c(p,J,p) )
-       #conv.array <- rep(NA,p)
+       B0.array <- var0.array <- array(NA,dim = c(p,J,p) )
+
+       ##conv.array <- rep(NA,p)
+
+       ## --- TAKE THIS AWAY --- ##
+       Ainv0.array <- array(NA, dim=c(p*J, p*J, p))
    }
-  
+
 for (i in 1:ntests) {
     # How do we know and do we have to know which term is being tested?
       iter1 <- 0
@@ -60,7 +64,7 @@ for (i in 1:ntests) {
          #cat("e matrix when h0 - ",h0,":\n",sep="")
          #print(e)
      }
-      
+
       if (h0 == 4) {
          C1 <- matrix(data=0, nrow=L, ncol=p * J)
          C1[1:L, (((i - 1) * J) + 1):((i * J) - 1)] <- diag(L)
@@ -70,11 +74,34 @@ for (i in 1:ntests) {
          #print(e)
       }
 
+      ## NEED TO MOVE OUTSIDE THE LOOP WITH THE 'while' LOOP
+      ## NEED TO DO ONCE (not for each parameter)
+      
+      C1 <- matrix(data=0, nrow=L, ncol=p * J)
+      if (h0 == 5) {
+          for(i2 in 1:ntests){
+              C1[1:L, (((i2 - 1) * J) + 1):((i2 * J) - 1)] <- diag(L)
+              for (m in 1:(J - 1)) {C1[m, ((i2 - 1) * J) + 1 + m] <- (-1)}
+          }
+         e <- t(C1)
+         cat("e matrix when h0 - ",h0,":\n",sep="")
+         print(e)
+     }
+
+      if (h0 == 6) {
+          C1 <- matrix(data=0, nrow=L, ncol=p * J)
+          C1[1:L, (((i - 1) * J) + 1):((i * J) - 1)] <- diag(L)
+          for (m in 1:(J - 1)) {C1[m, ((i - 1) * J) + 1 + m] <- (-m/(m + 1))}
+          e <- t(C1)
+          ##cat("e matrix when h0 - ",h0,":\n",sep="")
+          ##print(e)
+      }
+
       if(verbose){
           cat('e matrix for h0=',h0,'\n',sep="")
           print(e)
       }
-      
+
       B0 <- matrix(data = 0, nrow = p, ncol = J, byrow = TRUE)
       converge <- FALSE
 
@@ -82,8 +109,9 @@ for (i in 1:ntests) {
 
       while (!converge & iter1 <= niter1) {
          f1 <- texp(x %*% B0); f2 <- f1/(1 + apply(f1, 1, sum)); fref0 <- 1/(1 + apply(f1, 1, sum))
+
          temp <- getW(x, wt, B0); A <- temp$A; W <- temp$W
-         
+
          l0[i,1] <- apply(t(tln(cbind(f2, fref0)) * cbind(y, ys)) %*% wt, 2, sum)
          if (penalized) l0[i,1] <- l0[i,1] + 0.5 * tln(det(A))
 
@@ -93,8 +121,11 @@ for (i in 1:ntests) {
          score <- vec(t((t(x * wt)) %*% (y - f2)))
          if (penalized) score <- score + 0.5 * (W %*% vec(Ainv))
 
+         ## is lambda the same as the Lagrange multplier formulated in Tech Paper?? - Yes (under beta_jp =s)
          lambda <- -solve(t(e) %*% Ainv %*% e) %*% (t(e) %*% Ainv %*% score)
-         delta <- Ainv %*% (score + e %*% lambda); delta <- matrix(data = delta, nrow = p, ncol = J, byrow = TRUE)
+
+         delta <- Ainv %*% (score + e %*% lambda) ## ORIGINAL
+         delta <- matrix(data = delta, nrow = p, ncol = J, byrow = TRUE)
 
          iter2 <- 1; increase <- FALSE;
          while (!increase & iter2 < 5) {
@@ -121,30 +152,33 @@ for (i in 1:ntests) {
          iter1 <- iter1 + 1
      }
       if(h0 > 1) {
-          B0.array[,,i] <- B0
-          var0.array[,,i] <- diag(Ainv)
+          B0.array[,,i] <- B0 ## ARE THEY CORRECT?
+          for(j2 in 1:J){
+            var0.array[,j2,i] <- diag(Ainv[seq(from = j2, by = J, length = p), seq(from = j2, by = J, length = p)])
+          }
+          Ainv0.array[,,i] <- Ainv
+          #cat("test - ",i," has been done: the inverse of information matrix is:\n",sep="")
+          #print(Ainv0.array)
       }
       conv.vec <- c(conv.vec,converge)
-      #cat("test - ",i," has been done: the inverse of information matrix is:\n",sep="")
-      #print(Ainv)
   }
 
    conv.mat <- matrix(conv.vec, nrow = p, ncol = (ntests/p), byrow = TRUE)
    rownames(conv.mat) <- colnames(x)
-   
+
 
    if(h0>1){
        dimnames(B0)[[1]] <- colnames(x)
    }
 
    if(h0 > 1) dimnames(B0.array) <- dimnames(var0.array)<- list(colnames(x), paste(paste0((attr(mt,"variables")[[2]]),collapse=" "),"=",colnames(y),sep=""), colnames(x))
-   
+
    statistic <- matrix(data = LR <- 2 * (la - l0), nrow = p, ncol = size, byrow = TRUE)
    pvalue <- pchisq(statistic, L, lower.tail = FALSE)
 
    #conv=converge: added by JS, Sep 17, 2015
    list(l0 = l0, la = la, statistic = statistic, pvalue = pvalue, beta0.array = B0.array, var0.array = var0.array,
-        Ainv0 = Ainv, conv = conv.mat)
+        conv = conv.mat, Ainv0.array = Ainv0.array)
 
 }
 

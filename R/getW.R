@@ -2,16 +2,16 @@
 # W = pJ x [pJ]^2 matrix of 3rd derivatives
 
 getW <- function(x, wt, B, ...) {
-  
+
   p <- nrow(B) # p covariates
   J <- ncol(B) # J categories
-  
+
   f1 <- texp(x %*% B)
   f2 <- f1/(1 + apply(f1, 1, sum))
-  
+
   A <- matrix(data = 0, nrow = p*J, ncol = p*J)
   W <- matrix(data = 0, nrow = p*J, ncol = (p*J)^2)
-  
+
   ij <- 1
   while(ij <= J) {
     ik <- 1
@@ -52,5 +52,5 @@ getW <- function(x, wt, B, ...) {
     ij <- ij + 1
   }
   list(A = A, W = W)
-  
+
 }

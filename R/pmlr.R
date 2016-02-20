@@ -139,7 +139,7 @@
 #'   \item{pvalue}{an array containing the p-values from the individual parameter tests.}
 #'   \item{logLik}{the value of the log-likelihood function for the fitted model (under no constraints).}
 #'   \item{df}{the degrees of freedom, i.e., the number of estimated parameters in the model.}
-#'   \item{converged.H0}{an array containing the logical values whether the fitting algorithm for each null model is jusdged to have converged.}
+#'   \item{converged.H0}{an array containing the logical values whether the fitting algorithm for the null model for each inividual parameter is jusdged to have converged.}
 #'   \item{logLik.H0}{an array containing the value of the log-likelihood function for the fitted model under the null hypothesis for each individual parameter.}
 #'   \item{joint}{a logical value indicating whether the joint hypothesis tests were performed.}
 #'   \item{beta0all0}{When a joint likelihood test of all betas = 0 is called, the estimated betas are provided.  This is for information only and not displayed in the output. Not returned when \code{method="wald"}.}
@@ -283,7 +283,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
   if (penalized) useAstar.wald <- TRUE
   else useAstar.wald <- FALSE
 
-  useAstar.LRCI <- FALSE
+  useAstar.LRCI <- FALSE #check this
 
   # check the data and update the formula
 
@@ -330,7 +330,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
     fit <- getPLEs(x, y, wt, tol=tol, verbose=verbose); B <- fit$B; B.inf <- NULL; Ainv <- fit$Ainv; Astarinv <- fit$Astarinv; l.max <- fit$lstar.max; fit.conv <- fit$conv
     if (verbose) { cat("GetPLEs Complete. \n") }
   } else {
-    fit <- getMLEs(x, y, wt, tol=tol, verbose=verbose); B <- fit$B; B.inf <- fit$B.inf; Ainv <- fit$Ainv; l.max <- fit$l.max; fit.conv <- fit$conv
+    fit <- getMLEs(x, y, wt, tol=tol, verbose=verbose); B <- fit$B; B.inf <- fit$B.inf; Ainv <- fit$Ainv; l.max <- fit$l.max; fit.conv <- fit$conv; Astarinv <- NULL
     if (verbose) { cat("GetMLEs Complete. \n") }
   }
 
@@ -433,6 +433,10 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       beta0all0 <- testRun$beta0.array
       var0all0 <- testRun$var0.array
 
+      ## temporary -- TAKE OUT LATER -- DOES NOT WORK
+      ## NEED TO RETURN "ARRAY" of p matrices
+      ret$Ainv0all0 <- testRun$Ainv0.array
+
       # h0=3: Likelihood ratio test for H_0: b_{p,1} = b_{p,2} = ... = b_{p,J} (p-th covariate)
       testRun <- test.LR(x, y, wt, mt, B, h0 = 3, penalized, tol = tol, verbose=verbose);
       beta0allequal <- testRun$beta0.array
@@ -451,6 +455,8 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
       test.h0.allequal$test.all0.vs.constraint[,"ChiSq"] <- chisq
       test.h0.allequal$test.all0.vs.constraint[,"Pr(>ChiSq)"] <- pchisq(chisq, df=1, lower.tail=F)
 
+      ## temporary -- TAKE OUT LATER
+      ret$Ainv0allequal <- testRun$Ainv0.array
 
       # h0=4: Likelihood ratio test for proportionality: H_0: b_{p,J} = J*b_{p,1}, b_{p,J-1} = (J-1)*b_{p,1}, ... , b_{p,2} = 2*b_{p,1} (p-th covariate)
       if (J >= 2) {
@@ -472,6 +478,10 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
         test.h0.proportion$test.all0.vs.constraint[,"Pr(>ChiSq)"] <- pchisq(chisq, df=1, lower.tail=F)
         beta0proportion <- testRun$beta0.array
         var0proportion <- testRun$var0.array
+
+        ## temporary -- TAKE OUT LATER
+        ret$Ainv0proportion <- testRun$Ainv0.array
+
       }
       else {#if (J < 2) ?? no test ??
         #test.h0.proportion$test.h0[,"logLik"] <- NA
@@ -484,8 +494,14 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
     }
   }
 
-  #*** NEED TO THINK ABOUT THIS
+  ## --------------- REMOVE THIS LATER!!! --------------- ##
+  #
+  # for investigating the dimension of the problem
+  ret$Ainv <- Ainv
+  ret$Astarinv <- Astarinv
+  ## --------------- REMOVE THIS LATER!!! --------------- ##
 
+  #*** NEED TO THINK ABOUT THIS
   if (useAstar.wald) Ainv <- Astarinv# ** when is it being used?
   # Wald test
   if (method == "wald") {
@@ -684,13 +700,13 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
             #not available for the Wald test
             ret$beta0all0 = beta0all0
             ret$var0all0 = var0all0
-            
+
             ret$beta0allequal = beta0allequal
             ret$var0allequal = var0allequal
-            
+
             ret$beta0proportion = beta0proportion
             ret$var0proportion = var0proportion
-        
+
             ## Joint test results
             ret$logLik.joint = l0.joint
         }
@@ -701,6 +717,7 @@ pmlr <- function(formula, data, weights = NULL, penalized = TRUE,
     } #if(joint) ends
 
   }
+
 
   #attr(ret, "class") <- c("pmlr")
   class(ret) <- "pmlr"
